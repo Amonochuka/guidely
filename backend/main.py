@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.documents import router as documents_router
+
 app = FastAPI(
     title="Guidely API",
-    version="1.0.0",
-    description="Internal Knowledge Assistant API"
+    version="1.0.0"
 )
 
-# Allow requests from the React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -16,16 +16,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(documents_router)
+
 
 @app.get("/")
 def root():
-    return {
-        "message": "Welcome to Guidely API"
-    }
+    return {"message": "Welcome to Guidely API"}
 
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy"
-    }
+    return {"status": "healthy"}
