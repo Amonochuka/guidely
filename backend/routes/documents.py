@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from services.document_parser import extract_text
 
 router = APIRouter(
     prefix="/documents",
@@ -35,7 +36,16 @@ async def upload_document(file: UploadFile = File(...)):
     with destination.open("wb") as buffer:
         buffer.write(await file.read())
 
+    try:
+        text = extract_text(destination)
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not extract text from the uploaded document.",
+        )
+
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
+        "preview": text[:500],
     }
