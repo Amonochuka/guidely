@@ -1,8 +1,11 @@
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+
 from services.document_parser import extract_text
 from services.chunking import chunk_text
+from services.embeddings import generate_embedding
+from services.vector_store import add_embeddings, total_vectors
 
 router = APIRouter(
     prefix="/documents",
@@ -38,17 +41,30 @@ async def upload_document(file: UploadFile = File(...)):
         buffer.write(await file.read())
 
     try:
+        # Extract text
         text = extract_text(destination)
-        chunks = chunk_text(text, file.filename)
+
+        # Split into chunks
+        chunk_objects = chunk_text(text, file.filename)
+
+        # Generate one embedding per chunk
+        embeddings = [
+            generate_embedding(chunk.text)
+            for chunk in chunk_objects
+        ]
+
+        # Store vectors and metadata
+        add_embeddings(embeddings, chunk_objects)
+
     except Exception:
         raise HTTPException(
             status_code=400,
-            detail="Could not extract text from the uploaded document.",
+            detail="Could not process the uploaded document.",
         )
 
     return {
-        "message": "File uploaded successfully",
+        "message": "File uploaded and indexed successfully",
         "filename": file.filename,
-        "chunks": len(chunks),
-        "all_chunks": chunks,
+        "chunks_created": len(chunk_objects),
+        "vectors_in_index": total_vectors(),
     }

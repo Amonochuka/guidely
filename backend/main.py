@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.documents import router as documents_router
+from routes.search import router as search_router
 
 app = FastAPI(
     title="Guidely API",
@@ -17,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(documents_router)
+app.include_router(search_router)
 
 
 @app.get("/")
