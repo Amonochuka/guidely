@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from services.document_parser import extract_text
+from services.chunking import chunk_text
 
 router = APIRouter(
     prefix="/documents",
@@ -38,6 +39,7 @@ async def upload_document(file: UploadFile = File(...)):
 
     try:
         text = extract_text(destination)
+        chunks = chunk_text(text)
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -47,5 +49,6 @@ async def upload_document(file: UploadFile = File(...)):
     return {
         "message": "File uploaded successfully",
         "filename": file.filename,
-        "preview": text[:500],
+        "chunks": len(chunks),
+        "first_chunk": chunks[0] if chunks else None,
     }
