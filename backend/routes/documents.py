@@ -39,7 +39,7 @@ async def upload_document(file: UploadFile = File(...)):
 
     try:
         text = extract_text(destination)
-        chunks = chunk_text(text)
+        chunks = chunk_text(text, file.filename)
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -50,5 +50,5 @@ async def upload_document(file: UploadFile = File(...)):
         "message": "File uploaded successfully",
         "filename": file.filename,
         "chunks": len(chunks),
-        "first_chunk": chunks[0] if chunks else None,
+        "all_chunks": chunks,
     }
