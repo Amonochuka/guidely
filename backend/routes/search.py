@@ -25,6 +25,15 @@ def search(request: SearchRequest):
         for chunk in results
     )
 
+
+    sources = [
+        {
+            "file":chunk.filename,
+            "snippet":chunk.text,
+        }
+        for chunk in results
+    ]
+
     prompt = f"""
 You are a helpful assistant.
 
@@ -45,5 +54,5 @@ Question:
     return {
         "question": request.question,
         "answer": answer,
-        "matches": results,
+        "sources": sources,
     }
