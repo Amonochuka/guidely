@@ -15,6 +15,7 @@ DIMENSION = 384
 index = faiss.IndexFlatL2(DIMENSION)
 chunks: list[Chunk] = []
 
+
 def save_index():
     """
     Save the FAISS index to disk
@@ -47,7 +48,7 @@ def load_chunks():
         with CHUNKS_FILE.open("rb") as file:
             chunks = pickle.load(file)
 
-def add_embeddings(embeddings, chunk_objects) :
+def add_embeddings(embeddings, chunk_objects):
     """
     Add embedding vectors to the FAISS index.
     """

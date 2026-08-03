@@ -6,6 +6,11 @@ from services.document_parser import extract_text
 from services.chunking import chunk_text
 from services.embeddings import generate_embedding
 from services.vector_store import add_embeddings, total_vectors
+from services.document_cache import (
+    compute_hash,
+    is_document_changed,
+    update_document,
+)
 
 router = APIRouter(
     prefix="/documents",
@@ -40,6 +45,14 @@ async def upload_document(file: UploadFile = File(...)):
     with destination.open("wb") as buffer:
         buffer.write(await file.read())
 
+    file_hash = compute_hash(destination)
+
+    if not is_document_changed(file.filename, file_hash):
+        return {
+            "message": "Document already indexed. Skipping re-indexing.",
+            "filename": file.filename,
+        }
+
     try:
         # Extract text
         text = extract_text(destination)
@@ -56,7 +69,12 @@ async def upload_document(file: UploadFile = File(...)):
         # Store vectors and metadata
         add_embeddings(embeddings, chunk_objects)
 
-    except Exception:
+        # Update cache only after successful indexing
+        update_document(file.filename, file_hash)
+
+    except Exception as e:
+        print(e)
+
         raise HTTPException(
             status_code=400,
             detail="Could not process the uploaded document.",
