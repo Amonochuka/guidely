@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from services.embeddings import generate_embedding
 from services.vector_store import search as search_vectors
 from services.gemini import generate_answer
+from services.logger import logger
 
 router = APIRouter(
     prefix="/search",
@@ -15,10 +16,28 @@ class SearchRequest(BaseModel):
 
 
 @router.post("/")
-def search(request: SearchRequest):
+def search(request: SearchRequest): 
+    if not request.question.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="User must provide a question.",
+        )
+
+    logger.info(f"Question received: {request.question}")
+
     query_embedding = generate_embedding(request.question)
 
     results = search_vectors(query_embedding)
+    if not results:
+        logger.warning(
+            f"No relevant documents found for question: {request.question}"
+        )
+        
+        raise HTTPException(
+            status_code=404,
+            detail="No relevant documents found.",
+        )
+
 
     context = "\n\n".join(
         " ".join(chunk.text.split())
@@ -40,7 +59,19 @@ Question:
 {request.question}
 """
 
-    answer = generate_answer(prompt)
+    try:
+        answer = generate_answer(prompt)
+    except Exception:
+        logger.exception("Gemini failed to generate answer")
+
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to generate an answer from the AI model.",
+        )
+        
+    logger.info(
+        f"Answered question using {len(results)} chunks."
+    )
 
     sources = []
     for chunk in results:

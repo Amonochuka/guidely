@@ -11,6 +11,7 @@ INDEX_FILE = DATA_DIR / "index.faiss"
 CHUNKS_FILE = DATA_DIR / "chunks.pkl"
 
 DIMENSION = 384
+SIMILARITY_THRESHOLD = 1.0
 
 index = faiss.IndexFlatL2(DIMENSION)
 chunks: list[Chunk] = []
@@ -69,8 +70,8 @@ def search(query_embedding, k=3):
     distances, indices = index.search(query, k)
     results = []
 
-    for index_id in indices[0]:
-        if index_id >= 0:
+    for distance, index_id in zip(distances[0], indices[0]):
+        if index_id >= 0 and distance <= SIMILARITY_THRESHOLD:
             results.append(chunks[index_id])
 
     return results

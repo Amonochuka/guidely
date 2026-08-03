@@ -11,6 +11,7 @@ from services.document_cache import (
     is_document_changed,
     update_document,
 )
+from services.logger import logger
 
 router = APIRouter(
     prefix="/documents",
@@ -45,9 +46,12 @@ async def upload_document(file: UploadFile = File(...)):
     with destination.open("wb") as buffer:
         buffer.write(await file.read())
 
+    logger.info(f"Received upload: {file.filename}")
+
     file_hash = compute_hash(destination)
 
     if not is_document_changed(file.filename, file_hash):
+        logger.info(f"Cache hit: {file.filename}")
         return {
             "message": "Document already indexed. Skipping re-indexing.",
             "filename": file.filename,
@@ -72,8 +76,12 @@ async def upload_document(file: UploadFile = File(...)):
         # Update cache only after successful indexing
         update_document(file.filename, file_hash)
 
-    except Exception as e:
-        print(e)
+        logger.info(f"Indexed {len(chunk_objects)} chunks from {file.filename}")
+
+    except Exception:
+        logger.exception(
+            f"Failed to process document: {file.filename}"
+        )
 
         raise HTTPException(
             status_code=400,
