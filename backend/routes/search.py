@@ -21,18 +21,9 @@ def search(request: SearchRequest):
     results = search_vectors(query_embedding)
 
     context = "\n\n".join(
-        chunk.text
+        " ".join(chunk.text.split())
         for chunk in results
     )
-
-
-    sources = [
-        {
-            "file":chunk.filename,
-            "snippet":chunk.text,
-        }
-        for chunk in results
-    ]
 
     prompt = f"""
 You are a helpful assistant.
@@ -50,6 +41,16 @@ Question:
 """
 
     answer = generate_answer(prompt)
+
+    sources = []
+    for chunk in results:
+        sources.append(
+            {
+                "filename":chunk.filename,
+                "snippet": " ".join(chunk.text.split())[:200],
+                "chunk":chunk.chunk_index
+            }
+        )
 
     return {
         "question": request.question,
