@@ -67,7 +67,7 @@ Return Answer + Sources
 
 - FastAPI
 - FAISS
-- Sentence Transformers
+- Sentence Transformers (all-MiniLM-L6-v2)
 - Google Gemini API
 - NumPy
 - Pickle
