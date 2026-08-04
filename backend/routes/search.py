@@ -1,9 +1,11 @@
+import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from services.embeddings import generate_embedding
 from services.vector_store import search as search_vectors
 from services.gemini import generate_answer
 from services.logger import logger
+from services.metrics import record_query
 
 router = APIRouter(
     prefix="/search",
@@ -24,6 +26,8 @@ def search(request: SearchRequest):
         )
 
     logger.info(f"Question received: {request.question}")
+
+    start_time = time.perf_counter()
 
     query_embedding = generate_embedding(request.question)
 
@@ -71,6 +75,14 @@ Question:
         
     logger.info(
         f"Answered question using {len(results)} chunks."
+    )
+
+    elapsed = time.perf_counter() - start_time
+
+    record_query(elapsed)
+
+    logger.info(
+        f"Search completed in {elapsed:.2f} seconds."
     )
 
     sources = []

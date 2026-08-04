@@ -12,6 +12,8 @@ from services.document_cache import (
     update_document,
 )
 from services.logger import logger
+from services.metrics import record_cache_hit
+
 
 router = APIRouter(
     prefix="/documents",
@@ -52,6 +54,9 @@ async def upload_document(file: UploadFile = File(...)):
 
     if not is_document_changed(file.filename, file_hash):
         logger.info(f"Cache hit: {file.filename}")
+
+        record_cache_hit()
+
         return {
             "message": "Document already indexed. Skipping re-indexing.",
             "filename": file.filename,
