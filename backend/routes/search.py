@@ -49,11 +49,16 @@ def search(request: SearchRequest):
     )
 
     prompt = f"""
-You are a helpful assistant.
+You are a helpful assistant answering questions about uploaded documents.
 
-Answer the user's question ONLY using the provided context.
+Answer using only the provided context.
 
-If the answer cannot be found in the context, say:
+If the answer is present, answer it directly and briefly explain your answer using the relevant information from the context.
+
+Do not mention "the context" or "the document."
+
+If the answer is not present, reply exactly:
+
 "I couldn't find that information in the uploaded documents."
 
 Context:

@@ -11,7 +11,6 @@ INDEX_FILE = DATA_DIR / "index.faiss"
 CHUNKS_FILE = DATA_DIR / "chunks.pkl"
 
 DIMENSION = 384
-SIMILARITY_THRESHOLD = 1.0
 
 index = faiss.IndexFlatL2(DIMENSION)
 chunks: list[Chunk] = []
@@ -62,7 +61,7 @@ def add_embeddings(embeddings, chunk_objects):
 def total_vectors():
     return index.ntotal
 
-def search(query_embedding, k=3):
+def search(query_embedding, k=5):
     """
     Search for the k most similar embeddings.
     """
@@ -71,7 +70,7 @@ def search(query_embedding, k=3):
     results = []
 
     for distance, index_id in zip(distances[0], indices[0]):
-        if index_id >= 0 and distance <= SIMILARITY_THRESHOLD:
+        if index_id >= 0:
             results.append(chunks[index_id])
 
     return results
