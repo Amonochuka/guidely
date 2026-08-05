@@ -3,22 +3,30 @@ import { uploadDocument } from "../api/api";
 
 function AdminPage() {
   const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
 
   async function handleUpload() {
     if (!file) {
-      alert("Please select a file to upload.");
+      setMessage("Please select a file to upload.");
       return;
     }
+
+    setUploading(true);
+    setMessage("");
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       await uploadDocument(formData);
-      alert("Document uploaded successfully!");
+      setMessage("Document uploaded successfully!");
     } catch (error) {
       console.error("Error uploading document:", error);
-      alert("Failed to upload document.");
+      setMessage("Failed to upload document.");
+    }
+    finally{
+      setUploading(false);
     }
   }
 
@@ -31,10 +39,14 @@ function AdminPage() {
         onChange={(event) => setFile(event.target.files[0])}
       />
 
-      <button onClick={handleUpload}>
-        Upload
+      <button 
+        onClick={handleUpload}
+        disabled={uploading}
+      >
+        {uploading? "Uploading..." : "Upload"}
       </button>
-    </div>
+      {message && <p>{message}</p>}
+    </div>  
   );
 }
 
