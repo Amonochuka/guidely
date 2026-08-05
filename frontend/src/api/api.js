@@ -8,7 +8,8 @@ export function uploadDocument(formData) {
   return api.post("/documents/upload", formData);
 }
 
-export function searchQuestion(question) {
+
+export function searchDocuments(question) {
   return api.post("/search/", {
     question,
   });

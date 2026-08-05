@@ -1,7 +1,7 @@
-import Admin from "./pages/AdminPage";
+import SearchPage from "./pages/SearchPage";
 
 function App() {
-  return <Admin />;
+  return <SearchPage />;
 }
 
 export default App;
