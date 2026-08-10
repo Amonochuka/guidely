@@ -10,27 +10,26 @@ function SearchPage() {
 
   async function handleSearch() {
     if (!question.trim()) {
-      setMessage("Please enter a question. ");
+      setMessage("Please enter a question.");
       return;
     }
 
     setLoading(true);
     setMessage("");
+    setAnswer("");
+    setSources([]);
 
-    try{
+    try {
       const response = await searchDocuments(question);
 
-      setAnswer(response.data.answer)
-      setSources(response.data.sources)
-
-
+      setAnswer(response.data.answer);
+      setSources(response.data.sources);
     } catch (error) {
       console.error(error);
       setMessage("Search failed.");
     } finally {
       setLoading(false);
     }
-    
   }
   
   return (
