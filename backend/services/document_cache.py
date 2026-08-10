@@ -48,6 +48,10 @@ def is_document_changed(filename: str, file_hash: str) -> bool:
     
     return stored_hash != file_hash
 
+def document_exists(filename: str) -> bool:
+    return filename in document_cache
+
+
 def update_document(filename: str, file_hash: str) -> None:
     document_cache[filename] = file_hash
     save_cache()

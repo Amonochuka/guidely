@@ -58,6 +58,44 @@ def add_embeddings(embeddings, chunk_objects):
     save_index()
     save_chunks()
 
+def replace_document(embeddings, chunk_objects, filename):
+    """
+    Replace all indexed chunks for a document with new chunks.
+    """
+
+    global index, chunks
+
+    remaining_chunks = [
+        chunk for chunk in chunks
+        if chunk.filename != filename
+    ]
+
+    remaining_embeddings = []
+
+    for i, chunk in enumerate(chunks):
+        if chunk.filename != filename:
+            remaining_embeddings.append(
+                index.reconstruct(i)
+            )
+
+    new_vectors = np.array(embeddings).astype("float32")
+
+    if remaining_embeddings:
+        all_vectors = np.vstack([
+            np.array(remaining_embeddings).astype("float32"),
+            new_vectors,
+        ])
+    else:
+        all_vectors = new_vectors
+
+    index = faiss.IndexFlatL2(DIMENSION)
+    index.add(all_vectors)
+
+    chunks = remaining_chunks + chunk_objects
+
+    save_index()
+    save_chunks()
+
 def total_vectors():
     return index.ntotal
 
