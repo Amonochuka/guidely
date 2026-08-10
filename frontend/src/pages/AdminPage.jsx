@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { uploadDocument } from "../api/api";
 
 function AdminPage() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const fileInputRef = useRef(null);
 
   async function handleUpload() {
     if (!file) {
@@ -19,22 +20,29 @@ function AdminPage() {
     formData.append("file", file);
 
     try {
-      await uploadDocument(formData);
-      setMessage("Document uploaded successfully!");
+      const response = await uploadDocument(formData);
+      setMessage(response.data.message);
+      setFile(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      
     } catch (error) {
       console.error("Error uploading document:", error);
       setMessage("Failed to upload document.");
     }
-    finally{
+    finally {
       setUploading(false);
     }
   }
 
   return (
-    <div>
+    <div className="container">
       <h1>Upload Documents</h1>
 
       <input
+        ref={fileInputRef}
         type="file"
         onChange={(event) => setFile(event.target.files[0])}
       />

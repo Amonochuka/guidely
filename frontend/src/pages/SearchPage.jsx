@@ -34,7 +34,7 @@ function SearchPage() {
   }
   
   return (
-    <div>
+    <div className="container">
       <h1>Ask Guidely</h1>
 
       <textarea

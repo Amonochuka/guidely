@@ -2,13 +2,18 @@ import { Routes, Route } from "react-router-dom";
 
 import SearchPage from "./pages/SearchPage";
 import AdminPage from "./pages/AdminPage";
+import Navbar from "./components/Navbar";
 
-function App() {
+function App () {
   return (
-    <Routes>
-      <Route path="/" element={<SearchPage />} />
-      <Route path="/admin" element={<AdminPage />} />
-    </Routes>
+    <>
+      <Navbar />
+      
+      <Routes>
+        <Route path="/" element={<SearchPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
+    </>
   );
 }
 
