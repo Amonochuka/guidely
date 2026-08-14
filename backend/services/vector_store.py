@@ -12,7 +12,7 @@ CHUNKS_FILE = DATA_DIR / "chunks.pkl"
 
 DIMENSION = 384
 
-index = faiss.IndexFlatL2(DIMENSION)
+index = faiss.IndexFlatIP(DIMENSION)
 chunks: list[Chunk] = []
 
 
@@ -88,7 +88,7 @@ def replace_document(embeddings, chunk_objects, filename):
     else:
         all_vectors = new_vectors
 
-    index = faiss.IndexFlatL2(DIMENSION)
+    index = faiss.IndexFlatIP(DIMENSION)
     index.add(all_vectors)
 
     chunks = remaining_chunks + chunk_objects
@@ -99,19 +99,43 @@ def replace_document(embeddings, chunk_objects, filename):
 def total_vectors():
     return index.ntotal
 
-def search(query_embedding, k=5):
+def search(query_embedding, k=20):
     """
     Search for the k most similar embeddings.
     """
     query = np.array([query_embedding]).astype("float32")
+
     distances, indices = index.search(query, k)
+
     results = []
+
+    print("\n========== FAISS RESULTS ==========")
 
     for distance, index_id in zip(distances[0], indices[0]):
         if index_id >= 0:
-            results.append(chunks[index_id])
+            chunk = chunks[index_id]
+
+            print(
+                f"distance={distance:.4f} | "
+                f"{chunk.filename} | "
+                f"chunk={chunk.chunk_index}"
+            )
+
+            results.append(chunk)
+
+    print("========== END FAISS RESULTS ==========\n")
 
     return results
+
+def debug_chunks():
+    print("\n========== ALL INDEXED CHUNKS ==========")
+
+    for chunk in chunks:
+        if "Mathematics" in chunk.text or "Computer" in chunk.text:
+            print(f"\n--- {chunk.filename} | chunk {chunk.chunk_index} ---")
+            print(chunk.text)
+
+    print("\n========== END DEBUG ==========\n")
 
 # Load previously saved index and chunks when the application starts.
 load_index()

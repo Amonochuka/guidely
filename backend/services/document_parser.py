@@ -36,6 +36,9 @@ def extract_pdf(file_path: Path) -> str:
     for page in reader.pages:
         extracted = page.extract_text()
         if extracted:
+            print("\n--- EXTRACTED PAGE ---")
+            print(extracted)
+            print("--- END PAGE ---\n")
             text += extracted + "\n"
 
     return text

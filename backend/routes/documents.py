@@ -19,6 +19,12 @@ from services.document_cache import (
 )
 from services.logger import logger
 from services.metrics import record_cache_hit
+from services.vector_store import (
+    add_embeddings,
+    replace_document,
+    total_vectors,
+    debug_chunks,
+)
 
 
 router = APIRouter(
@@ -58,15 +64,15 @@ async def upload_document(file: UploadFile = File(...)):
 
     file_hash = compute_hash(destination)
 
-    if not is_document_changed(file.filename, file_hash):
-        logger.info(f"Cache hit: {file.filename}")
+    # if not is_document_changed(file.filename, file_hash):
+    #     logger.info(f"Cache hit: {file.filename}")
 
-        record_cache_hit()
+    #     record_cache_hit()
 
-        return {
-            "message": "Document already indexed. Skipping re-indexing.",
-            "filename": file.filename,
-        }
+    #     return {
+    #         "message": "Document already indexed. Skipping re-indexing.",
+    #         "filename": file.filename,
+    #     }
 
     try:
         # Extract text
@@ -96,6 +102,8 @@ async def upload_document(file: UploadFile = File(...)):
 
         # Update cache only after successful indexing
         update_document(file.filename, file_hash)
+
+        debug_chunks()
 
         logger.info(f"Indexed {len(chunk_objects)} chunks from {file.filename}")
 

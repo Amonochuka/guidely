@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 load_dotenv()
 
@@ -14,6 +15,11 @@ def generate_answer(prompt: str) -> str:
     response = client.models.generate_content(
         model="gemini-3.6-flash",
         contents=prompt,
+        config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(
+                thinking_level="medium"
+            )
+        ),
     )
 
     return response.text

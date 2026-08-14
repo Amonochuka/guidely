@@ -6,4 +6,4 @@ def generate_embedding(text: str):
     """
     Generate an embedding vector for a piece of text.
     """
-    return model.encode(text).tolist()
+    return model.encode(text, normalize_embeddings=True).tolist()

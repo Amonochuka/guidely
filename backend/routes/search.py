@@ -29,14 +29,60 @@ def search(request: SearchRequest):
 
     start_time = time.perf_counter()
 
+    embedding_start = time.perf_counter()
+
     query_embedding = generate_embedding(request.question)
 
+    embedding_time = time.perf_counter() - embedding_start
+
+    search_start = time.perf_counter()
+
     results = search_vectors(query_embedding)
+
+    # Temporary diagnostic filtering for education questions
+    query_lower = request.question.lower()
+
+    if any(
+        term in query_lower
+        for term in ["degree", "bachelor", "bsc", "education", "studied"]
+    ):
+        education_terms = [
+            "bsc",
+            "bachelor",
+            "education",
+            "mathematics",
+            "computer science",
+            "qualification",
+            "university",
+        ]
+
+        education_results = [
+            chunk
+            for chunk in results
+            if any(
+                term in chunk.text.lower()
+                for term in education_terms
+            )
+        ]
+
+        if education_results:
+            results = education_results
+
+    print("\n========== RETRIEVED CHUNKS ==========")
+
+    for chunk in results:
+        print(f"\n--- {chunk.filename} | chunk {chunk.chunk_index} ---")
+        print(chunk.text)
+
+    print("\n========== END RETRIEVED CHUNKS ==========\n")
+
+    search_time = time.perf_counter() - search_start
+    
     if not results:
         logger.warning(
             f"No relevant documents found for question: {request.question}"
         )
-        
+         
         raise HTTPException(
             status_code=404,
             detail="No relevant documents found.",
@@ -48,28 +94,59 @@ def search(request: SearchRequest):
         for chunk in results
     )
 
+    print("\n========== GEMINI CONTEXT ==========")
+    print(context)
+    print("========== END GEMINI CONTEXT ==========\n")
+ 
     prompt = f"""
-You are a helpful assistant answering questions about uploaded documents.
+You are answering a question about a person's uploaded documents.
 
-Answer using only the provided context.
+The answer MUST be based only on the DOCUMENT EXCERPTS.
 
-If the answer is present, answer it directly and briefly explain your answer using the relevant information from the context.
-
-Do not mention "the context" or "the document."
-
-If the answer is not present, reply exactly:
-
-"I couldn't find that information in the uploaded documents."
-
-Context:
+DOCUMENT EXCERPTS:
 {context}
 
-Question:
+QUESTION:
 {request.question}
+
+Follow these rules:
+
+1. Read the document excerpts carefully.
+2. If the excerpts contain a fact that answers the question, answer YES/NO or give the requested fact directly.
+3. You are allowed to interpret obvious equivalent wording.
+4. "BSc" means "Bachelor of Science".
+5. A Bachelor of Science is a bachelor's degree.
+6. If a document says someone has a "BSc" followed by a subject, treat that as evidence that the person has a bachelor's degree.
+7. Do NOT require the document to literally contain the words "bachelor's degree".
+8. Do NOT say the information is missing when the excerpts contain equivalent evidence.
+9. Do NOT invent facts that are not supported by the excerpts.
+10. If the excerpts genuinely contain no information that answers the question, reply exactly:
+"I couldn't find that information in the uploaded documents."
+
+For example, if the excerpts say:
+
+"Qualification: BSc Mathematics / Computer Science (Statistics)"
+
+and the question asks:
+
+"Does Amon have a bachelor's degree?"
+
+the correct answer is:
+
+"Yes. Amon has a BSc in Mathematics / Computer Science (Statistics), which is a Bachelor of Science degree."
+
+Now answer the QUESTION using the DOCUMENT EXCERPTS.
+
+ANSWER:
 """
+
+    generation_start = time.perf_counter()
 
     try:
         answer = generate_answer(prompt)
+        print("\n========== GEMINI ANSWER ==========")
+        print(answer)
+        print("========== END GEMINI ANSWER ==========\n")
     except Exception:
         logger.exception("Gemini failed to generate answer")
 
@@ -77,6 +154,8 @@ Question:
             status_code=502,
             detail="Failed to generate an answer from the AI model.",
         )
+    
+    generation_time = time.perf_counter() - generation_start
         
     logger.info(
         f"Answered question using {len(results)} chunks."
@@ -87,7 +166,10 @@ Question:
     record_query(elapsed)
 
     logger.info(
-        f"Search completed in {elapsed:.2f} seconds."
+        f"Embedding: {embedding_time:.2f}s | "
+        f"FAISS: {search_time:.2f}s | "
+        f"Gemini: {generation_time:.2f}s | "
+        f"Total: {elapsed:.2f}s"
     )
 
     sources = []

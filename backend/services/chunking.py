@@ -1,15 +1,24 @@
 from typing import List
 from models.chunk import Chunk
 
-def chunk_text(text: str,  filename: str,  chunk_size: int = 500) -> List[Chunk]:
+
+def chunk_text(
+    text: str,
+    filename: str,
+    chunk_size: int = 800,
+    overlap: int = 200,
+) -> List[Chunk]:
     """
-    Split text into fixed-size chunks.
+    Split text into overlapping chunks.
     """
 
     chunks = []
 
-    for i in range(0, len(text), chunk_size):
-        chunk = text[i:i + chunk_size]
+    start = 0
+
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end]
 
         if chunk.strip():
             chunks.append(
@@ -20,5 +29,7 @@ def chunk_text(text: str,  filename: str,  chunk_size: int = 500) -> List[Chunk]
                     text=chunk,
                 )
             )
+
+        start += chunk_size - overlap
 
     return chunks
