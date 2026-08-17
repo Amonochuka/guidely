@@ -7,7 +7,7 @@ from services.embeddings import generate_embedding
 from services.vector_store import search as search_vectors
 from services.gemini import generate_answer
 from services.logger import logger
-from services.metrics import record_query
+from services.metrics import record_failure, record_query
 
 
 router = APIRouter(
@@ -23,6 +23,8 @@ class SearchRequest(BaseModel):
 @router.post("/")
 def search(request: SearchRequest):
     if not request.question.strip():
+        record_failure("empty_query")
+
         raise HTTPException(
             status_code=400,
             detail="User must provide a question.",
@@ -70,6 +72,8 @@ def search(request: SearchRequest):
     )
 
     if not results:
+        record_failure("no_relevant_results")
+
         logger.warning(
             "No relevant documents found for question: "
             f"{request.question}"
@@ -151,6 +155,8 @@ ANSWER:
         )
 
     except Exception:
+        record_failure("answer_generation")
+
         logger.exception(
             "Gemini failed to generate answer"
         )

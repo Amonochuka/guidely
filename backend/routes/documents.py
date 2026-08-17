@@ -18,7 +18,12 @@ from services.document_cache import (
     update_document,
 )
 from services.logger import logger
-from services.metrics import record_cache_hit
+from services.metrics import (
+    record_cache_hit,
+    record_cache_miss,
+    record_embeddings_generated,
+    record_failure,
+)
 
 
 router = APIRouter(
@@ -46,6 +51,8 @@ async def upload_document(file: UploadFile = File(...)):
     extension = Path(file.filename).suffix.lower()
 
     if extension not in ALLOWED_EXTENSIONS:
+        record_failure("unsupported_file_type")
+
         raise HTTPException(
             status_code=400,
             detail="Only .txt, .pdf and .docx files are allowed.",
@@ -76,6 +83,8 @@ async def upload_document(file: UploadFile = File(...)):
             "vectors_in_index": total_vectors(),
         }
 
+    record_cache_miss()
+
     try:
         # Extract text
         text = extract_text(destination)
@@ -91,6 +100,7 @@ async def upload_document(file: UploadFile = File(...)):
             generate_embedding(chunk.text)
             for chunk in chunk_objects
         ]
+        record_embeddings_generated(len(embeddings))
 
         # Replace existing vectors when this filename already exists.
         # Otherwise add the new document to the index.
@@ -120,6 +130,8 @@ async def upload_document(file: UploadFile = File(...)):
         )
 
     except Exception:
+        record_failure("document_processing")
+
         logger.exception(
             f"Failed to process document: {file.filename}"
         )
