@@ -52,7 +52,7 @@ Return Answer + Sources
 - Health endpoint
 - Metrics endpoint
 
-## Frontend *(In Progress)*
+## Frontend
 
 - Search page
 - Admin upload page
@@ -85,9 +85,13 @@ Return Answer + Sources
 guidely/
 │
 ├── backend/
+│   ├── data/
+│   │   ├── sample-docs/
+│   │   └── retrieval-validation.md
 │   ├── routes/
 │   ├── services/
 │   ├── models/
+│   ├── tests/
 │   ├── data/
 │   └── main.py
 │
@@ -241,20 +245,22 @@ GET /system/metrics
 Returns runtime metrics including:
 
 - queries served
-- cache hits
-- median latency
+- cache hits, misses, and hit rate
+- generated embeddings
+- median and p95 query latency
+- failure counts by error type
 
 ---
 
 # Dataset
 
-The project uses sample internal knowledge documents including:
+The project includes five internal knowledge-base documents:
 
-- Policies
-- FAQs
-- Guides
-- Manuals
-- Company documentation
+- `employee-handbook.txt`
+- `it-security-policy.txt`
+- `customer-support-guide.txt`
+- `new-hire-onboarding.txt`
+- `expense-faq.txt`
 
 At least five sample documents are included in:
 
@@ -277,27 +283,14 @@ cd guidely
 
 ## Backend
 
-Create a virtual environment.
+Run these commands from the project root.
 
 ```bash
-python -m venv venv
-```
-
-Activate it.
-
-Linux/macOS
-
-```bash
+cd backend
+python3 -m venv venv
 source venv/bin/activate
-```
-
-Install dependencies.
-
-```bash
 pip install -r requirements.txt
 ```
-
----
 
 ## Environment Variables
 
@@ -326,6 +319,7 @@ http://localhost:8000
 ## Frontend
 
 ```bash
+cd ..
 cd frontend
 npm install
 npm run dev
@@ -345,6 +339,8 @@ The API handles:
 
 - Empty questions
 - Unsupported file types
+- Empty documents
+- Documents with no extractable text
 - Corrupted documents
 - Missing AI configuration
 - No relevant search results
@@ -365,18 +361,40 @@ The backend logs:
 
 ---
 
-# Testing & Metrics
+# Testing and Metrics
 
-> **To be completed after frontend testing.**
+Run the automated tests from the project root after installing the backend
+dependencies:
+
+```bash
+PYTHONPATH=backend backend/venv/bin/python -m unittest discover -s backend/tests -v
+```
+
+For manual retrieval validation, upload all files in `backend/data/sample-docs/`
+and run the 15 questions in `backend/data/retrieval-validation.md`. A query is a
+pass when its expected document appears in the first three returned sources.
+
+```text
+Retrieval@3 = passed queries / 15 * 100
+```
+
+View live backend metrics in a browser at:
+
+```text
+http://localhost:8000/system/metrics
+```
+
+Record measured results below after running the validation steps. Do not replace
+the placeholders with estimated values.
 
 | Metric | Result | Status |
 |---------|--------|--------|
-| Retrieval@3 | TBD | ⏳ |
-| Answer Reference Coverage | TBD | ⏳ |
-| Source Precision | TBD | ⏳ |
-| Median Latency | TBD | ⏳ |
-| Embedding Cache Effectiveness | TBD | ⏳ |
-| Failure Handling | TBD | ⏳ |
+| Retrieval@3 | Run 15 validation queries | Ready to measure |
+| Answer reference coverage | Check source list for each answer | Ready to measure |
+| Source precision | Spot-check 10 snippets | Ready to measure |
+| Median and p95 latency | Read `/system/metrics` | Auto-logged |
+| Embedding cache effectiveness | Re-upload unchanged files and read `/system/metrics` | Auto-logged |
+| Failure handling | Test empty query, unsupported/corrupt file, no results, and missing model key | Auto-logged |
 
 ---
 
