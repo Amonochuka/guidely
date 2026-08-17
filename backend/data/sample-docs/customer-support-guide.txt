@@ -1,0 +1,13 @@
+Guidely Customer Support Guide
+
+Support hours
+Standard support is available Monday to Friday from 8:00 AM to 6:00 PM East Africa Time, excluding public holidays. Customers on Premium plans receive 24-hour support for severity-one incidents.
+
+Incident severity
+A severity-one incident is a complete production outage or a confirmed data-loss event affecting multiple customers. A severity-two incident is a major feature degradation without a reasonable workaround. Severity-one incidents must be acknowledged within one hour; severity-two incidents within four business hours.
+
+Escalation
+Create an incident ticket for every severity-one or severity-two report. Page the on-call engineer for severity-one incidents and notify the support lead. Include the customer name, affected service, start time, impact, and steps already attempted.
+
+Closing tickets
+Before closing a ticket, confirm that the customer accepts the resolution or that the issue is documented as resolved. Record the root cause and any follow-up action in the ticket.

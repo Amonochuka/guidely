@@ -1,0 +1,13 @@
+Guidely Information Security Policy
+
+Passwords and multi-factor authentication
+Use a unique password of at least 14 characters for every company account. Multi-factor authentication is required for email, source control, cloud services, and the company VPN. Do not share passwords or authentication codes.
+
+Lost devices
+Report a lost, stolen, or suspected-compromised company device to IT Security within one hour of discovering the incident. Contact security@guidely.example or use the emergency IT channel. IT will remotely lock the device when possible.
+
+Sensitive information
+Customer records, employee data, API keys, and financial information are confidential. Store them only in approved company systems. Do not send confidential data to personal email accounts or upload it to unapproved services.
+
+Phishing
+Do not open unexpected links or attachments. Report suspicious messages using the email client's Report Phishing button or forward them to security@guidely.example.
