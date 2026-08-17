@@ -38,7 +38,6 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Allowed file types
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx"}
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 
 @router.get("/")
@@ -76,14 +75,6 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=400,
             detail="The uploaded document is empty.",
-        )
-
-    if len(content) > MAX_FILE_SIZE_BYTES:
-        record_failure("file_too_large")
-
-        raise HTTPException(
-            status_code=413,
-            detail="Uploaded documents must be 10 MB or smaller.",
         )
 
     destination = UPLOAD_DIR / filename
