@@ -1,11 +1,14 @@
 import time
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
 from services.embeddings import generate_embedding
 from services.vector_store import search as search_vectors
 from services.gemini import generate_answer
 from services.logger import logger
 from services.metrics import record_query
+
 
 router = APIRouter(
     prefix="/search",
@@ -18,33 +21,49 @@ class SearchRequest(BaseModel):
 
 
 @router.post("/")
-def search(request: SearchRequest): 
+def search(request: SearchRequest):
     if not request.question.strip():
         raise HTTPException(
             status_code=400,
             detail="User must provide a question.",
         )
 
-    logger.info(f"Question received: {request.question}")
+    logger.info(
+        f"Question received: {request.question}"
+    )
 
     start_time = time.perf_counter()
 
+    # Generate query embedding
     embedding_start = time.perf_counter()
 
-    query_embedding = generate_embedding(request.question)
+    query_embedding = generate_embedding(
+        request.question
+    )
 
-    embedding_time = time.perf_counter() - embedding_start
+    embedding_time = (
+        time.perf_counter() - embedding_start
+    )
 
+    # Search FAISS
     search_start = time.perf_counter()
 
     results = search_vectors(query_embedding)
 
-    # Temporary diagnostic filtering for education questions
+    # Temporary diagnostic filtering for education questions.
+    # This helps ensure education questions receive chunks
+    # containing the relevant education information.
     query_lower = request.question.lower()
 
     if any(
         term in query_lower
-        for term in ["degree", "bachelor", "bsc", "education", "studied"]
+        for term in [
+            "degree",
+            "bachelor",
+            "bsc",
+            "education",
+            "studied",
+        ]
     ):
         education_terms = [
             "bsc",
@@ -68,36 +87,50 @@ def search(request: SearchRequest):
         if education_results:
             results = education_results
 
-    print("\n========== RETRIEVED CHUNKS ==========")
+    print(
+        "\n========== RETRIEVED CHUNKS =========="
+    )
 
     for chunk in results:
-        print(f"\n--- {chunk.filename} | chunk {chunk.chunk_index} ---")
+        print(
+            f"\n--- {chunk.filename} | "
+            f"chunk {chunk.chunk_index} ---"
+        )
         print(chunk.text)
 
-    print("\n========== END RETRIEVED CHUNKS ==========\n")
+    print(
+        "\n========== END RETRIEVED CHUNKS ==========\n"
+    )
 
-    search_time = time.perf_counter() - search_start
-    
+    search_time = (
+        time.perf_counter() - search_start
+    )
+
     if not results:
         logger.warning(
-            f"No relevant documents found for question: {request.question}"
+            "No relevant documents found for question: "
+            f"{request.question}"
         )
-         
+
         raise HTTPException(
             status_code=404,
             detail="No relevant documents found.",
         )
 
-
+    # Build context for Gemini
     context = "\n\n".join(
         " ".join(chunk.text.split())
         for chunk in results
     )
 
-    print("\n========== GEMINI CONTEXT ==========")
+    print(
+        "\n========== GEMINI CONTEXT =========="
+    )
     print(context)
-    print("========== END GEMINI CONTEXT ==========\n")
- 
+    print(
+        "========== END GEMINI CONTEXT ==========\n"
+    )
+
     prompt = f"""
 You are answering a question about a person's uploaded documents.
 
@@ -140,28 +173,44 @@ Now answer the QUESTION using the DOCUMENT EXCERPTS.
 ANSWER:
 """
 
+    # Generate answer
     generation_start = time.perf_counter()
 
     try:
         answer = generate_answer(prompt)
-        print("\n========== GEMINI ANSWER ==========")
+
+        print(
+            "\n========== GEMINI ANSWER =========="
+        )
         print(answer)
-        print("========== END GEMINI ANSWER ==========\n")
+        print(
+            "========== END GEMINI ANSWER ==========\n"
+        )
+
     except Exception:
-        logger.exception("Gemini failed to generate answer")
+        logger.exception(
+            "Gemini failed to generate answer"
+        )
 
         raise HTTPException(
             status_code=502,
-            detail="Failed to generate an answer from the AI model.",
+            detail=(
+                "Failed to generate an answer "
+                "from the AI model."
+            ),
         )
-    
-    generation_time = time.perf_counter() - generation_start
-        
+
+    generation_time = (
+        time.perf_counter() - generation_start
+    )
+
     logger.info(
         f"Answered question using {len(results)} chunks."
     )
 
-    elapsed = time.perf_counter() - start_time
+    elapsed = (
+        time.perf_counter() - start_time
+    )
 
     record_query(elapsed)
 
@@ -172,13 +221,17 @@ ANSWER:
         f"Total: {elapsed:.2f}s"
     )
 
+    # Build source information
     sources = []
+
     for chunk in results:
         sources.append(
             {
-                "filename":chunk.filename,
-                "snippet": " ".join(chunk.text.split())[:200],
-                "chunk":chunk.chunk_index
+                "filename": chunk.filename,
+                "snippet": " ".join(
+                    chunk.text.split()
+                )[:200],
+                "chunk": chunk.chunk_index,
             }
         )
 

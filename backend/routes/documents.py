@@ -5,26 +5,20 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from services.document_parser import extract_text
 from services.chunking import chunk_text
 from services.embeddings import generate_embedding
-from services.vector_store import ( 
-    add_embeddings, 
-    replace_document, 
-    total_vectors,
-)
-
-from services.document_cache import (
-    compute_hash,
-    is_document_changed,
-    document_exists, 
-    update_document,
-)
-from services.logger import logger
-from services.metrics import record_cache_hit
 from services.vector_store import (
     add_embeddings,
     replace_document,
     total_vectors,
     debug_chunks,
 )
+from services.document_cache import (
+    compute_hash,
+    is_document_changed,
+    document_exists,
+    update_document,
+)
+from services.logger import logger
+from services.metrics import record_cache_hit
 
 
 router = APIRouter(
@@ -32,9 +26,11 @@ router = APIRouter(
     tags=["Documents"],
 )
 
+
 # Folder where uploaded files will be stored
 UPLOAD_DIR = Path("data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 
 # Allowed file types
 ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx"}
@@ -64,22 +60,31 @@ async def upload_document(file: UploadFile = File(...)):
 
     file_hash = compute_hash(destination)
 
-    # if not is_document_changed(file.filename, file_hash):
-    #     logger.info(f"Cache hit: {file.filename}")
+    # Skip re-indexing when the same document has already been indexed
+    # and its contents have not changed.
+    if not is_document_changed(file.filename, file_hash):
+        logger.info(
+            f"Cache hit: {file.filename}. "
+            "Document unchanged; skipping re-indexing."
+        )
 
-    #     record_cache_hit()
+        record_cache_hit()
 
-    #     return {
-    #         "message": "Document already indexed. Skipping re-indexing.",
-    #         "filename": file.filename,
-    #     }
+        return {
+            "message": "Document already indexed. Skipping re-indexing.",
+            "filename": file.filename,
+            "vectors_in_index": total_vectors(),
+        }
 
     try:
         # Extract text
         text = extract_text(destination)
 
         # Split into chunks
-        chunk_objects = chunk_text(text, file.filename)
+        chunk_objects = chunk_text(
+            text,
+            file.filename,
+        )
 
         # Generate one embedding per chunk
         embeddings = [
@@ -87,7 +92,8 @@ async def upload_document(file: UploadFile = File(...)):
             for chunk in chunk_objects
         ]
 
-        # Store vectors and metadata
+        # Replace existing vectors when this filename already exists.
+        # Otherwise add the new document to the index.
         if document_exists(file.filename):
             replace_document(
                 embeddings,
@@ -101,11 +107,17 @@ async def upload_document(file: UploadFile = File(...)):
             )
 
         # Update cache only after successful indexing
-        update_document(file.filename, file_hash)
+        update_document(
+            file.filename,
+            file_hash,
+        )
 
         debug_chunks()
 
-        logger.info(f"Indexed {len(chunk_objects)} chunks from {file.filename}")
+        logger.info(
+            f"Indexed {len(chunk_objects)} chunks from "
+            f"{file.filename}"
+        )
 
     except Exception:
         logger.exception(
