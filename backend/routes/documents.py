@@ -9,7 +9,6 @@ from services.vector_store import (
     add_embeddings,
     replace_document,
     total_vectors,
-    debug_chunks,
 )
 from services.document_cache import (
     compute_hash,
@@ -121,8 +120,6 @@ async def upload_document(file: UploadFile = File(...)):
             file.filename,
             file_hash,
         )
-
-        debug_chunks()
 
         logger.info(
             f"Indexed {len(chunk_objects)} chunks from "

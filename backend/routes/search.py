@@ -52,21 +52,6 @@ def search(request: SearchRequest):
 
     results = search_vectors(query_embedding)
 
-    print(
-        "\n========== RETRIEVED CHUNKS =========="
-    )
-
-    for chunk in results:
-        print(
-            f"\n--- {chunk.filename} | "
-            f"chunk {chunk.chunk_index} ---"
-        )
-        print(chunk.text)
-
-    print(
-        "\n========== END RETRIEVED CHUNKS ==========\n"
-    )
-
     search_time = (
         time.perf_counter() - search_start
     )
@@ -88,14 +73,6 @@ def search(request: SearchRequest):
     context = "\n\n".join(
         " ".join(chunk.text.split())
         for chunk in results
-    )
-
-    print(
-        "\n========== GEMINI CONTEXT =========="
-    )
-    print(context)
-    print(
-        "========== END GEMINI CONTEXT ==========\n"
     )
 
     prompt = f"""
@@ -145,14 +122,6 @@ ANSWER:
 
     try:
         answer = generate_answer(prompt)
-
-        print(
-            "\n========== GEMINI ANSWER =========="
-        )
-        print(answer)
-        print(
-            "========== END GEMINI ANSWER ==========\n"
-        )
 
     except Exception:
         record_failure("answer_generation")

@@ -118,33 +118,11 @@ def search(
 
     results = []
 
-    print("\n========== FAISS RESULTS ==========")
-
     for score, index_id in zip(scores[0], indices[0]):
         if index_id >= 0 and score >= min_similarity:
-            chunk = chunks[index_id]
-
-            print(
-                f"score={score:.4f} | "
-                f"{chunk.filename} | "
-                f"chunk={chunk.chunk_index}"
-            )
-
-            results.append(chunk)
-
-    print("========== END FAISS RESULTS ==========\n")
+            results.append(chunks[index_id])
 
     return results
-
-def debug_chunks():
-    print("\n========== ALL INDEXED CHUNKS ==========")
-
-    for chunk in chunks:
-        if "Mathematics" in chunk.text or "Computer" in chunk.text:
-            print(f"\n--- {chunk.filename} | chunk {chunk.chunk_index} ---")
-            print(chunk.text)
-
-    print("\n========== END DEBUG ==========\n")
 
 # Load previously saved index and chunks when the application starts.
 load_index()
