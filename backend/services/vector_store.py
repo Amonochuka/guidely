@@ -11,6 +11,8 @@ INDEX_FILE = DATA_DIR / "index.faiss"
 CHUNKS_FILE = DATA_DIR / "chunks.pkl"
 
 DIMENSION = 384
+DEFAULT_TOP_K = 3
+MIN_SIMILARITY_SCORE = 0.35
 
 index = faiss.IndexFlatIP(DIMENSION)
 chunks: list[Chunk] = []
@@ -99,24 +101,31 @@ def replace_document(embeddings, chunk_objects, filename):
 def total_vectors():
     return index.ntotal
 
-def search(query_embedding, k=20):
+def search(
+    query_embedding,
+    k: int = DEFAULT_TOP_K,
+    min_similarity: float = MIN_SIMILARITY_SCORE,
+):
     """
-    Search for the k most similar embeddings.
+    Return up to k chunks that meet the minimum similarity score.
     """
+    if index.ntotal == 0:
+        return []
+
     query = np.array([query_embedding]).astype("float32")
 
-    distances, indices = index.search(query, k)
+    scores, indices = index.search(query, min(k, index.ntotal))
 
     results = []
 
     print("\n========== FAISS RESULTS ==========")
 
-    for distance, index_id in zip(distances[0], indices[0]):
-        if index_id >= 0:
+    for score, index_id in zip(scores[0], indices[0]):
+        if index_id >= 0 and score >= min_similarity:
             chunk = chunks[index_id]
 
             print(
-                f"distance={distance:.4f} | "
+                f"score={score:.4f} | "
                 f"{chunk.filename} | "
                 f"chunk={chunk.chunk_index}"
             )

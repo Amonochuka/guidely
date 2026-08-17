@@ -50,43 +50,6 @@ def search(request: SearchRequest):
 
     results = search_vectors(query_embedding)
 
-    # Temporary diagnostic filtering for education questions.
-    # This helps ensure education questions receive chunks
-    # containing the relevant education information.
-    query_lower = request.question.lower()
-
-    if any(
-        term in query_lower
-        for term in [
-            "degree",
-            "bachelor",
-            "bsc",
-            "education",
-            "studied",
-        ]
-    ):
-        education_terms = [
-            "bsc",
-            "bachelor",
-            "education",
-            "mathematics",
-            "computer science",
-            "qualification",
-            "university",
-        ]
-
-        education_results = [
-            chunk
-            for chunk in results
-            if any(
-                term in chunk.text.lower()
-                for term in education_terms
-            )
-        ]
-
-        if education_results:
-            results = education_results
-
     print(
         "\n========== RETRIEVED CHUNKS =========="
     )
