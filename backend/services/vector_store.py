@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 from pathlib import Path
 import pickle
+from collections import Counter
 from models.chunk import Chunk
 
 DATA_DIR = Path("data/faiss")
@@ -100,6 +101,16 @@ def replace_document(embeddings, chunk_objects, filename):
 
 def total_vectors():
     return index.ntotal
+
+
+def list_documents() -> list[dict[str, int | str]]:
+    """Return indexed document names with their number of chunks."""
+    chunk_counts = Counter(chunk.filename for chunk in chunks)
+
+    return [
+        {"filename": filename, "chunk_count": chunk_count}
+        for filename, chunk_count in sorted(chunk_counts.items())
+    ]
 
 def search(
     query_embedding,

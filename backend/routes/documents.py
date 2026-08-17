@@ -7,6 +7,7 @@ from services.chunking import chunk_text
 from services.embeddings import generate_embedding
 from services.vector_store import (
     add_embeddings,
+    list_documents,
     replace_document,
     total_vectors,
 )
@@ -42,7 +43,12 @@ ALLOWED_EXTENSIONS = {".txt", ".pdf", ".docx"}
 
 @router.get("/")
 def documents_home():
-    return {"message": "Documents endpoint"}
+    documents = list_documents()
+
+    return {
+        "documents": documents,
+        "total_documents": len(documents),
+    }
 
 
 @router.post("/upload")

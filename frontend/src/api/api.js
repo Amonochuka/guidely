@@ -8,6 +8,9 @@ export function uploadDocument(formData) {
   return api.post("/documents/upload", formData);
 }
 
+export function getDocuments() {
+  return api.get("/documents/");
+}
 
 export function searchDocuments(question) {
   return api.post("/search/", {
