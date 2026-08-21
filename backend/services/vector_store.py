@@ -135,6 +135,26 @@ def search(
 
     return results
 
+
+def search_ranked(query_embedding, k: int = DEFAULT_TOP_K):
+    """Return the best matching chunks and their similarity scores.
+
+    Search always returns the top matches when the index has vectors. The LLM
+    decides whether those excerpts answer the question; a hard score cutoff
+    would otherwise turn a wording mismatch into a false "no documents" error.
+    """
+    if index.ntotal == 0:
+        return []
+
+    query = np.array([query_embedding]).astype("float32")
+    scores, indices = index.search(query, min(k, index.ntotal))
+
+    return [
+        (chunks[index_id], float(score))
+        for score, index_id in zip(scores[0], indices[0])
+        if index_id >= 0
+    ]
+
 # Load previously saved index and chunks when the application starts.
 load_index()
 load_chunks()

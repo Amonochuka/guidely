@@ -9,6 +9,10 @@ function AdminPage() {
   const [documentsError, setDocumentsError] = useState("");
   const fileInputRef = useRef(null);
 
+  function getErrorMessage(error, fallback) {
+    return error.response?.data?.detail || fallback;
+  }
+
   async function loadDocuments() {
     try {
       const response = await getDocuments();
@@ -16,7 +20,7 @@ function AdminPage() {
       setDocumentsError("");
     } catch (error) {
       console.error("Error loading documents:", error);
-      setDocumentsError("Could not load indexed documents.");
+      setDocumentsError(getErrorMessage(error, "Could not load indexed documents."));
     }
   }
 
@@ -34,7 +38,7 @@ function AdminPage() {
         console.error("Error loading documents:", error);
  
         if (active) {
-          setDocumentsError("Could not load indexed documents.");
+          setDocumentsError(getErrorMessage(error, "Could not load indexed documents."));
         }
       });
 
@@ -67,7 +71,7 @@ function AdminPage() {
       
     } catch (error) {
       console.error("Error uploading document:", error);
-      setMessage("Failed to upload document.");
+      setMessage(getErrorMessage(error, "Failed to upload document."));
     }
     finally {
       setUploading(false);

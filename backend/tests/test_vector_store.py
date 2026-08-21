@@ -48,3 +48,13 @@ class VectorStoreTests(unittest.TestCase):
         vector_store.index = faiss.IndexFlatIP(vector_store.DIMENSION)
 
         self.assertEqual(vector_store.search(np.zeros(vector_store.DIMENSION)), [])
+
+    def test_returns_ranked_results_without_a_similarity_cutoff(self):
+        query = np.zeros(vector_store.DIMENSION, dtype="float32")
+        query[0] = 1.0
+
+        results = vector_store.search_ranked(query)
+
+        self.assertEqual(results[0][0].filename, "relevant.txt")
+        self.assertEqual(results[0][1], 1.0)
+        self.assertEqual(results[1][0].filename, "irrelevant.txt")

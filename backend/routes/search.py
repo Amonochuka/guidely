@@ -1,11 +1,12 @@
 import time
 
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from services.embeddings import generate_embedding
-from services.vector_store import search as search_vectors
-from services.gemini import generate_answer
+from services.vector_store import search_ranked
+from services.gemini import GeminiConfigurationError, generate_answer
 from services.logger import logger
 from services.metrics import record_failure, record_query
 
@@ -50,13 +51,13 @@ def search(request: SearchRequest):
     # Search FAISS
     search_start = time.perf_counter()
 
-    results = search_vectors(query_embedding)
+    ranked_results = search_ranked(query_embedding)
 
     search_time = (
         time.perf_counter() - search_start
     )
 
-    if not results:
+    if not ranked_results:
         record_failure("no_relevant_results")
 
         logger.warning(
@@ -66,13 +67,13 @@ def search(request: SearchRequest):
 
         raise HTTPException(
             status_code=404,
-            detail="No relevant documents found.",
+            detail="No documents have been indexed yet. Upload a document first.",
         )
 
     # Build context for Gemini
     context = "\n\n".join(
         " ".join(chunk.text.split())
-        for chunk in results
+        for chunk, _ in ranked_results
     )
 
     prompt = f"""
@@ -123,6 +124,19 @@ ANSWER:
     try:
         answer = generate_answer(prompt)
 
+    except GeminiConfigurationError as error:
+        record_failure("missing_model_key")
+        logger.warning("Gemini configuration error: %s", error)
+        raise HTTPException(status_code=503, detail=str(error))
+
+    except (TimeoutError, httpx.TimeoutException):
+        record_failure("answer_generation_timeout")
+        logger.exception("Gemini request timed out")
+        raise HTTPException(
+            status_code=504,
+            detail="The AI service timed out. Please try again.",
+        )
+
     except Exception:
         record_failure("answer_generation")
 
@@ -143,7 +157,7 @@ ANSWER:
     )
 
     logger.info(
-        f"Answered question using {len(results)} chunks."
+        f"Answered question using {len(ranked_results)} chunks."
     )
 
     elapsed = (
@@ -162,7 +176,7 @@ ANSWER:
     # Build source information
     sources = []
 
-    for chunk in results:
+    for rank, (chunk, score) in enumerate(ranked_results, start=1):
         sources.append(
             {
                 "filename": chunk.filename,
@@ -170,6 +184,8 @@ ANSWER:
                     chunk.text.split()
                 )[:200],
                 "chunk": chunk.chunk_index,
+                "rank": rank,
+                "similarity_score": round(score, 3),
             }
         )
 

@@ -299,9 +299,9 @@ Copy the environment template and add your Google AI Studio key:
 cp .env.example .env
 ```
 
-`GEMINI_API_KEY` is required. `GEMINI_MODEL`, `CORS_ORIGINS`, and
-`VITE_API_BASE_URL` are optional configuration values with local-development
-defaults. Keep `.env` private; it is ignored by Git.
+`GEMINI_API_KEY` is required. `GEMINI_MODEL`, `GEMINI_TIMEOUT_MS`,
+`CORS_ORIGINS`, and `VITE_API_BASE_URL` are optional configuration values with
+local-development defaults. Keep `.env` private; it is ignored by Git.
 
 ---
 

@@ -8,6 +8,10 @@ function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  function getErrorMessage(error) {
+    return error.response?.data?.detail || "Search failed. Please try again.";
+  }
+
   async function handleSearch() {
     if (!question.trim()) {
       setMessage("Please enter a question.");
@@ -26,7 +30,7 @@ function SearchPage() {
       setSources(response.data.sources);
     } catch (error) {
       console.error(error);
-      setMessage("Search failed.");
+      setMessage(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -65,8 +69,13 @@ function SearchPage() {
           <h2>Sources</h2>
 
           {sources.map((source, index) =>(
-            <div key={index}>
-              <strong>{source.filename}</strong>
+            <div key={`${source.filename}-${source.chunk}-${index}`}>
+              <strong>
+                #{source.rank ?? index + 1} — {source.filename}
+                {typeof source.similarity_score === "number" && (
+                  ` (${Math.round(source.similarity_score * 100)}% match)`
+                )}
+              </strong>
               <p>{source.snippet}</p>
             </div>
           ))}
