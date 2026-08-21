@@ -11,6 +11,7 @@ backend/data/faiss/
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # Node
 frontend/node_modules/

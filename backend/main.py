@@ -5,6 +5,7 @@ from routes.documents import router as documents_router
 from routes.search import router as search_router
 from routes.system import router as system_router
 from routes.metrics import router as metrics_router;
+from services.settings import CORS_ORIGINS
 
 app = FastAPI(
     title="Guidely API",
@@ -13,7 +14,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

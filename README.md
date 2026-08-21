@@ -294,11 +294,15 @@ pip install -r requirements.txt
 
 ## Environment Variables
 
-Create a `.env` file.
+Copy the environment template and add your Google AI Studio key:
 
-```text
-GEMINI_API_KEY=your_api_key
+```bash
+cp .env.example .env
 ```
+
+`GEMINI_API_KEY` is required. `GEMINI_MODEL`, `CORS_ORIGINS`, and
+`VITE_API_BASE_URL` are optional configuration values with local-development
+defaults. Keep `.env` private; it is ignored by Git.
 
 ---
 
