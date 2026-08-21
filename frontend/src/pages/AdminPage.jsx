@@ -32,7 +32,7 @@ function AdminPage() {
       })
       .catch((error) => {
         console.error("Error loading documents:", error);
-
+ 
         if (active) {
           setDocumentsError("Could not load indexed documents.");
         }
