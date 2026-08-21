@@ -286,9 +286,8 @@ cd guidely
 Run these commands from the project root.
 
 ```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv backend/venv
+source backend/venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -309,6 +308,7 @@ defaults. Keep `.env` private; it is ignored by Git.
 ## Run Backend
 
 ```bash
+cd backend
 uvicorn main:app --reload
 ```
 
