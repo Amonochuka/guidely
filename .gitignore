@@ -32,3 +32,4 @@ backend/data/uploads/
 # Validation run output
 scripts/guidely_answers.json
 scripts/guidely_failure_report.json
+scripts/guidely_source_precision.json
