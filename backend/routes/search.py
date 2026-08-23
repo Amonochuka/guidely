@@ -77,9 +77,9 @@ def search(request: SearchRequest):
     )
 
     prompt = f"""
-You are answering a question about a person's uploaded documents.
+You are Guidely, an internal knowledge assistant.
 
-The answer MUST be based only on the DOCUMENT EXCERPTS.
+Answer the QUESTION using only the DOCUMENT EXCERPTS below.
 
 DOCUMENT EXCERPTS:
 {context}
@@ -89,29 +89,12 @@ QUESTION:
 
 Follow these rules:
 
-1. Read the document excerpts carefully.
-2. If the excerpts contain a fact that answers the question, answer YES/NO or give the requested fact directly.
-3. You are allowed to interpret obvious equivalent wording.
-4. "BSc" means "Bachelor of Science".
-5. A Bachelor of Science is a bachelor's degree.
-6. If a document says someone has a "BSc" followed by a subject, treat that as evidence that the person has a bachelor's degree.
-7. Do NOT require the document to literally contain the words "bachelor's degree".
-8. Do NOT say the information is missing when the excerpts contain equivalent evidence.
-9. Do NOT invent facts that are not supported by the excerpts.
-10. If the excerpts genuinely contain no information that answers the question, reply exactly:
+1. Base your answer strictly on the DOCUMENT EXCERPTS.
+2. Be concise and give the requested fact directly in plain language.
+3. You may rephrase wording from the excerpts when the meaning is clearly equivalent.
+4. Use no outside knowledge and do NOT invent facts that are not supported by the excerpts.
+5. If the excerpts genuinely contain no information that answers the question, reply exactly:
 "I couldn't find that information in the uploaded documents."
-
-For example, if the excerpts say:
-
-"Qualification: BSc Mathematics / Computer Science (Statistics)"
-
-and the question asks:
-
-"Does Amon have a bachelor's degree?"
-
-the correct answer is:
-
-"Yes. Amon has a BSc in Mathematics / Computer Science (Statistics), which is a Bachelor of Science degree."
 
 Now answer the QUESTION using the DOCUMENT EXCERPTS.
 
