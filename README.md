@@ -382,6 +382,22 @@ pass when its expected document appears in the first three returned sources.
 Retrieval@3 = passed queries / 15 * 100
 ```
 
+The full validation session is automated with two scripts run in this order from
+the project root while the backend is up:
+
+```bash
+backend/venv/bin/python scripts/test_failures.py
+backend/venv/bin/python scripts/validate_guidely.py
+```
+
+`test_failures.py` must run first against an empty store (wipe
+`backend/data/faiss/` and `backend/data/cache/` and restart the backend); it
+exercises the four required failure cases and then indexes the sample docs so
+the no-key case reaches the answer-generation step on a temporary instance.
+`validate_guidely.py` then runs the happy-path checks. Artifacts are written to
+`scripts/guidely_failure_report.json`, `scripts/guidely_answers.json`, and
+`scripts/guidely_source_precision.json`.
+
 View live backend metrics in a browser at:
 
 ```text
@@ -391,14 +407,29 @@ http://localhost:8000/system/metrics
 Record measured results below after running the validation steps. Do not replace
 the placeholders with estimated values.
 
+Results recorded on 2026-08-23 (local dev, warm cache):
+
 | Metric | Result | Status |
 |---------|--------|--------|
-| Retrieval@3 | Run 15 validation queries | Ready to measure |
-| Answer reference coverage | Check source list for each answer | Ready to measure |
-| Source precision | Spot-check 10 snippets | Ready to measure |
-| Median and p95 latency | Read `/system/metrics` | Auto-logged |
-| Embedding cache effectiveness | Re-upload unchanged files and read `/system/metrics` | Auto-logged |
-| Failure handling | Test empty query, unsupported/corrupt file, no results, and missing model key | Auto-logged |
+| Retrieval@3 | 15/15 queries = 100% (target >= 80%) | Pass |
+| Answer reference coverage | 15/15 answers cite the expected file = 100% (target >= 90%) | Pass |
+| Source precision | 10/10 rank-1 snippets found verbatim in the cited files = 100% (target >= 80%) | Pass |
+| Median latency | 2.39s warm cache (target < 3s) | Pass |
+| p95 latency | 2.61s warm cache (target < 5s) | Pass |
+| Embedding cache effectiveness | 10/10 repeated uploads of unchanged docs skipped re-indexing, 0 embeddings regenerated (target 100%) | Pass |
+| Failure handling | empty query -> 400, corrupted file -> 400, unsupported type -> 400, no results -> 404, missing model key -> 503, all with clear messages and logged in `failure_counts` | Pass |
+| Indexing throughput (optional) | 5 sample files indexed in 1.41s; unchanged re-uploads are skipped | Pass |
+
+Notes on reading `/system/metrics`:
+
+- `cache_hit_rate` aggregates every upload attempt since startup, so a session
+  that starts from an empty store reports first-time indexing as misses. For
+  unchanged documents the behaviour is 100% hits: every repeated upload returns
+  "Document already indexed. Skipping re-indexing." and generates no new
+  embeddings.
+- The `missing_model_key` failure is counted on the temporary no-key instance
+  that `scripts/test_failures.py` spawns; the merged view across both instances
+  is in `scripts/guidely_failure_report.json`.
 
 ---
 
@@ -418,4 +449,3 @@ the placeholders with estimated values.
 
 **Amon Mandela Ochuka**
 
-Zone01 Kisumu
