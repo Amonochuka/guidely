@@ -1,5 +1,5 @@
-from fastapi import APIRouter;
-from services.metrics import get_metrics;
+from fastapi import APIRouter
+from services.metrics import get_metrics
 
 router = APIRouter(
     prefix="/metrics",
