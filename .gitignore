@@ -28,3 +28,6 @@ Thumbs.db
 # Local generated data
 backend/data/cache/
 backend/data/uploads/
+
+# Validation run output
+scripts/guidely_answers.json
